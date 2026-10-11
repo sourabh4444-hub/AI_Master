@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: agent-chatbot
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o-mini}
+          temperature: ${OPENAI_TEMPERATURE:0.2}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      openAi:
+        failure-rate-threshold: 50
+        minimum-number-of-calls: 5
+        sliding-window-size: 10
+        wait-duration-in-open-state: 30s
+  retry:
+    instances:
+      openAi:
+        max-attempts: 2
+        wait-duration: 500ms
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+  ratelimiter:
+    instances:
+      openAi:
+        limit-for-period: ${OPENAI_REQUESTS_PER_PERIOD:20}
+        limit-refresh-period: ${OPENAI_RATE_LIMIT_PERIOD:1m}
+        timeout-duration: 0
+  timelimiter:
+    instances:
+      openAi:
+        timeout-duration: ${OPENAI_TIMEOUT:30s}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
